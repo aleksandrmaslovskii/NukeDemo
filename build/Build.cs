@@ -39,7 +39,7 @@ class Build : NukeBuild
     AbsolutePath OutputDirectory => RootDirectory / "output";
 
     Target Clean => _ => _
-        .Before(Restore)
+        .Before(Restore, Publish)
         .Executes(() =>
         {
             SourceDirectory.GlobDirectories("**/bin", "**/obj").ForEach(DeleteDirectory);
@@ -67,4 +67,18 @@ class Build : NukeBuild
                 .EnableNoRestore());
         });
 
+    Target Publish => _ => _
+        .Executes(() =>
+        {
+            DotNetPublish(s => s
+                .SetAssemblyVersion(GitVersion.AssemblySemVer)
+                .SetFileVersion(GitVersion.AssemblySemFileVer)
+                .SetInformationalVersion(GitVersion.InformationalVersion)
+                .SetProject(Solution.GetProject("NukeDemo"))
+                .EnablePublishSingleFile()
+                .EnableSelfContained()
+                .SetConfiguration(Configuration.Release)
+                .SetRuntime("win-x64")
+                .SetOutput(OutputDirectory));
+        });
 }
